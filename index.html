@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DEGR — Échelle Douleur Enfant Gustave Roussy</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f6f7f9;color:#111}
+    header{padding:18px 16px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:10}
+    h1{font-size:18px;margin:0 0 6px 0}
+    .sub{font-size:13px;color:#444;margin:0;line-height:1.35}
+    main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:12px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .toprow{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .score{font-size:28px;font-weight:800;letter-spacing:.5px}
+    .pill{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa}
+    .btns{display:flex;gap:10px;flex-wrap:wrap}
+    button{border:1px solid #d1d5db;background:#fff;padding:10px 12px;border-radius:10px;cursor:pointer}
+    button.primary{border-color:#111;background:#111;color:#fff}
+    button:hover{filter:brightness(.98)}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #e5e7eb;padding:10px;vertical-align:top}
+    th{font-size:12px;color:#444;text-transform:uppercase;letter-spacing:.04em;background:#fafafa}
+    td.item{font-size:13px}
+    .opts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-start}
+    .opt{display:inline-flex;gap:6px;align-items:center;border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:6px 10px}
+    .opt input{margin:0}
+    details{border:1px dashed #d1d5db;border-radius:12px;padding:10px;background:#fcfcfd}
+    details summary{cursor:pointer;font-weight:700}
+    .small{font-size:12px;color:#555;line-height:1.35}
+    textarea{width:100%;min-height:90px;padding:10px;border:1px solid #d1d5db;border-radius:10px;resize:vertical}
+    @media print{
+      header{position:static}
+      button{display:none}
+      body{background:#fff}
+      .card{box-shadow:none}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>DEGR — Échelle Douleur Enfant Gustave Roussy (0–40)</h1>
+  <p class="sub">
+    10 items cotés de 0 à 4 → Score total /40.<br>
+    Sous-scores : <strong>SDD</strong> = 1+3+5+7+9 · <strong>EVD</strong> = 4+8 · <strong>APM</strong> = 2+6+10.
+  </p>
+</header>
+
+<main>
+  <section class="card">
+    <div class="toprow">
+      <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+        <div class="score" id="totalTxt">0/40</div>
+        <div class="pill" id="sddTxt">SDD: 0/20</div>
+        <div class="pill" id="evdTxt">EVD: 0/8</div>
+        <div class="pill" id="apmTxt">APM: 0/12</div>
+      </div>
+      <div class="btns">
+        <button class="primary" type="button" id="btnPrint">Imprimer</button>
+        <button type="button" id="btnReset">Réinitialiser</button>
+      </div>
+    </div>
+
+    <details style="margin-top:12px">
+      <summary>Rappel : structure des sous-scores</summary>
+      <div class="small" style="margin-top:10px">
+        <p><strong>Signes Directs de Douleur (SDD)</strong> : Item 1 (position antalgique au repos) + Item 3 (protection spontanée) + Item 5 (attitude antalgique dans le mouvement) + Item 7 (contrôle à la mobilisation) + Item 9 (réactions à l’examen).</p>
+        <p><strong>Expression Volontaire de Douleur (EVD)</strong> : Item 4 (plaintes somatiques) + Item 8 (localisation).</p>
+        <p><strong>Atonie Psycho-Motrice (APM)</strong> : Item 2 (manque d’expressivité) + Item 6 (désintérêt) + Item 10 (lenteur/rareté).</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <table aria-label="DEGR">
+      <thead>
+        <tr>
+          <th style="width:60%">Item</th>
+          <th style="width:40%">Cotations (0 à 4)</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <div style="margin-top:12px">
+      <label class="small" for="obs"><strong>Observations</strong> (optionnel)</label>
+      <textarea id="obs" placeholder="Contexte, durée, soins en cours, localisation suspectée, traitement, etc."></textarea>
+    </div>
+
+    <div class="small" style="margin-top:10px;color:#666;text-align:center">
+      Source : Échelle DEGR (contenu items 1–10 et sous-scores). :contentReference[oaicite:1]{index=1}
+    </div>
+  </section>
+</main>
+
+<script>
+  const items = [
+    { n:1, key:"i1", title:"Position antalgique au repos",
+      desc:"Évaluer sans activité physique (allongé/assis). Ne pas confondre avec l’attitude antalgique dans le mouvement.",
+      scale:[
+        "Absence : l’enfant peut se mettre n’importe comment.",
+        "L’enfant semble éviter certaines positions.",
+        "L’enfant évite certaines positions mais n’en paraît pas gêné.",
+        "L’enfant choisit une position antalgique évidente qui apporte un certain soulagement.",
+        "L’enfant recherche sans succès une position antalgique et n’arrive pas à être bien installé."
+      ]},
+    { n:2, key:"i2", title:"Manque d’expressivité",
+      desc:"À étudier alors que l’enfant aurait des raisons de s’animer (jeux, repas, discussion).",
+      scale:[
+        "Vif, dynamique, visage animé.",
+        "Un peu terne, éteint.",
+        "Au moins un signe : visage peu expressif, regard morne, voix monotone, débit verbal lent.",
+        "Plusieurs des signes ci-dessus sont nets.",
+        "Visage figé, regard vide, parle avec effort."
+      ]},
+    { n:3, key:"i3", title:"Protection spontanée des zones douloureuses",
+      desc:"En permanence, l’enfant évite un contact sur la zone douloureuse.",
+      scale:[
+        "Aucun souci de se protéger.",
+        "Évite les heurts violents.",
+        "Protège son corps en évitant/écartant ce qui pourrait le toucher.",
+        "Se préoccupe visiblement de limiter tout attouchement d’une région.",
+        "Toute son attention est requise pour protéger la zone atteinte."
+      ]},
+    { n:4, key:"i4", title:"Plaintes somatiques",
+      desc:"Façon dont l’enfant dit qu’il a mal pendant le temps d’observation.",
+      scale:[
+        "Pas de plainte.",
+        "Plaintes neutres (sans affect) et sans effort.",
+        "Au moins un signe : suscite la question, voix geignarde, mimique expressive.",
+        "En plus de 2 : attire l’attention, demande un médicament.",
+        "Au milieu de gémissements/sanglots/supplications, dit qu’il a mal."
+      ]},
+    { n:5, key:"i5", title:"Attitude antalgique dans le mouvement",
+      desc:"À rechercher au cours d’enchaînements (ex : marche), éventuellement sollicités. Ne pas confondre avec lenteur/rareté.",
+      scale:[
+        "Aucune gêne à bouger, mouvements souples et aisés.",
+        "Gêne / manque de naturel dans certains mouvements.",
+        "Prend des précautions pour certains gestes.",
+        "Évite nettement certains gestes, se mobilise avec prudence et attention.",
+        "Doit être aidé pour éviter des mouvements trop pénibles."
+      ]},
+    { n:6, key:"i6", title:"Désintérêt pour le monde extérieur",
+      desc:"Énergie disponible pour entrer en relation avec le monde environnant.",
+      scale:[
+        "Plein d’énergie, s’intéresse, peut fixer son attention, se distraire.",
+        "S’intéresse mais sans enthousiasme.",
+        "S’ennuie facilement mais peut être stimulé.",
+        "Se traîne, incapable de jouer, regarde passivement.",
+        "Apathique et indifférent à tout."
+      ]},
+    { n:7, key:"i7", title:"Contrôle exercé par l’enfant quand on le mobilise (passif)",
+      desc:"Surveille le geste, donne un conseil, arrête ou tient la main du soignant.",
+      scale:[
+        "Se laisse mobiliser sans attention particulière.",
+        "Regard attentif quand on le mobilise.",
+        "En plus de 1 : montre qu’il faut faire attention.",
+        "En plus de 2 : retient/guide la main du soignant.",
+        "S’oppose à toute initiative ou exige son accord avant tout geste."
+      ]},
+    { n:8, key:"i8", title:"Localisation de zones douloureuses par l’enfant",
+      desc:"Spontanément ou à l’interrogatoire, l’enfant localise sa douleur.",
+      scale:[
+        "Pas de localisation.",
+        "Uniquement verbalement : région vague.",
+        "En plus de 1 : montre d’un geste vague.",
+        "Désigne avec la main une région précise.",
+        "En plus de 3 : décrit précisément le siège de la douleur."
+      ]},
+    { n:9, key:"i9", title:"Réactions à l’examen des zones douloureuses",
+      desc:"Noter uniquement ce qui est déclenché par l’examen, pas les signes pré-existants.",
+      scale:[
+        "Aucune réaction déclenchée.",
+        "Réticence au moment de l’examen.",
+        "Au moins un signe : raideur, crispation, pleurs brusques, blocage respiratoire.",
+        "En plus de 2 : change de couleur, transpire, geint ou cherche à arrêter l’examen.",
+        "Examen quasiment impossible à cause des réactions."
+      ]},
+    { n:10, key:"i10", title:"Lenteur et rareté des mouvements",
+      desc:"Comparer à l’activité gestuelle habituelle de l’enfant du même âge.",
+      scale:[
+        "Mouvements larges, vifs, rapides, variés, plaisir.",
+        "Un peu lent, bouge sans entrain.",
+        "Un signe : latence, mouvements restreints, gestes lents, initiatives rares.",
+        "Plusieurs des signes ci-dessus sont nets.",
+        "Comme figé, alors que rien ne l’empêche de bouger."
+      ]}
+  ];
+
+  const groups = {
+    sdd: ["i1","i3","i5","i7","i9"],   // /20
+    evd: ["i4","i8"],                  // /8
+    apm: ["i2","i6","i10"]             // /12
+  };
+
+  const tbody = document.getElementById("rows");
+
+  function makeRow(it){
+    const tr = document.createElement("tr");
+
+    const tdItem = document.createElement("td");
+    tdItem.className = "item";
+    tdItem.innerHTML = `<strong>Item ${it.n} — ${it.title}</strong><div class="small" style="margin-top:6px">${it.desc}</div>`;
+
+    const tdOpts = document.createElement("td");
+    const wrap = document.createElement("div");
+    wrap.className = "opts";
+
+    // 0..4
+    for(let v=0; v<=4; v++){
+      const lab = document.createElement("label");
+      lab.className = "opt";
+
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = it.key;
+      input.value = String(v);
+      input.setAttribute("aria-label", `Item ${it.n} : ${v}`);
+
+      const span = document.createElement("span");
+      span.textContent = `${v} — ${it.scale[v]}`;
+
+      lab.appendChild(input);
+      lab.appendChild(span);
+      wrap.appendChild(lab);
+    }
+
+    tdOpts.appendChild(wrap);
+
+    tr.appendChild(tdItem);
+    tr.appendChild(tdOpts);
+    return tr;
+  }
+
+  items.forEach(it => tbody.appendChild(makeRow(it)));
+
+  function getVal(key){
+    const sel = document.querySelector(`input[name="${key}"]:checked`);
+    return sel ? Number(sel.value) : 0;
+  }
+
+  function sum(keys){
+    return keys.reduce((acc,k)=>acc+getVal(k),0);
+  }
+
+  function render(){
+    const total = items.reduce((acc,it)=>acc+getVal(it.key),0);
+    const sdd = sum(groups.sdd);
+    const evd = sum(groups.evd);
+    const apm = sum(groups.apm);
+
+    document.getElementById("totalTxt").textContent = `${total}/40`;
+    document.getElementById("sddTxt").textContent = `SDD: ${sdd}/20`;
+    document.getElementById("evdTxt").textContent = `EVD: ${evd}/8`;
+    document.getElementById("apmTxt").textContent = `APM: ${apm}/12`;
+  }
+
+  document.addEventListener("change", (e) => {
+    if(e.target && e.target.matches('input[type="radio"]')) render();
+  });
+
+  document.getElementById("btnReset").addEventListener("click", () => {
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.getElementById("obs").value = "";
+    render();
+  });
+
+  document.getElementById("btnPrint").addEventListener("click", () => window.print());
+
+  render();
+</script>
+</body>
+</html>
